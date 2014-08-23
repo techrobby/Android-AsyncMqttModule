@@ -26,11 +26,23 @@ All the MQTTExceptions are handled according to the type of exception (see code)
 All the QOS 1 and 2 messages will be stored in the MqttPersistence database before being published and once an ack is received they are removed from the DB.
 There is a problem in Paho library that after you publish a message using paho publish, if there is any exception or disconnection before message persistence, the message will be lost, as it will not get inserted into PAHO db just after publish (refer paho source code), hence, MQTTPersistence is used so that even before publish is called message gets inserted in db and once you get an ack it is removed.
 
+Android messenger is used to send the messages on the MQTT thread. Incoming handler is attached to the messenger object and will call send function once it receives the message in handleMesage callback. See usage below.
+
+
 USAGE
 -------------------
 
-Get the instance of MQTTManager and call its init function. When you want to connect to the broker, call connectOnMqttThread() function and you are done. Once mqtt is connected, onSuccess of IMqttActionListener is called. Here you should ideally subscribe to topics. When a new message is received messageArrived callback will be called (refer paho documentation). To disconnect call the disconnect method which will return IMqttToken object which is a Future object using which state of operation can be tracked. In order to send the message on the MQTT_Thread use the messenger object returned by getMessenger() function. 
+Get the instance of MQTTManager and call its init function. When you want to connect to the broker, call connectOnMqttThread() function and you are done. 
+Once mqtt is connected, onSuccess of IMqttActionListener is called. Here you should ideally subscribe to topics. 
+
+When a new message is received messageArrived callback will be called (refer paho documentation). 
+
+To disconnect call the disconnect method which will return IMqttToken object which is a Future object using which state of operation can be tracked. 
+
+In order to send the message on the MQTT_Thread use the messenger object returned by getMessenger() function. 
+
 Example to send message : 
+
 				Message msg = Message.obtain();
 				msg.what = 1; 
 				String data = "Hello world";
