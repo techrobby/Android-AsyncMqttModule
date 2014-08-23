@@ -21,9 +21,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
@@ -44,6 +47,8 @@ public class MQTTManager extends BroadcastReceiver
 	private Handler mqttThreadHandler;
 
 	private Looper mMqttHandlerLooper;
+	
+	private Messenger mMessenger; // this is used to interact with the mqtt thread
 
 	private ConnectionCheckRunnable connChkRunnable;
 
@@ -86,6 +91,8 @@ public class MQTTManager extends BroadcastReceiver
 
 	private volatile AtomicBoolean haveUnsentMessages = new AtomicBoolean(false);
 
+	private static MQTTManager _instance = null;
+
 	// this is used to check and connect mqtt and will be run on MQTT thread
 	private class ConnectionCheckRunnable implements Runnable
 	{
@@ -115,12 +122,52 @@ public class MQTTManager extends BroadcastReceiver
 		}
 	}
 
-	private MQTTManager(Context ctx)
+	class IncomingHandler extends Handler
 	{
-		context = ctx;
-		cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		public IncomingHandler(Looper looper)
+		{
+			super(looper);
+		}
+
+		@Override
+		public void handleMessage(Message msg)
+		{
+			try
+			{
+				switch (msg.what)
+				{
+				case MQTTConstants.MSG_PUBLISH:
+					Bundle bundle = msg.getData();
+					String message = bundle.getString(MQTTConstants.MESSAGE);
+					long msgId = bundle.getLong(MQTTConstants.MESSAGE_ID, -1);
+					send(new MQTTPacket(message.getBytes(), msgId, System.currentTimeMillis()), msg.arg1);
+					break;
+				}
+			}
+			catch (Exception e)
+			{
+				Log.e(TAG, "Exception in handle message", e);
+			}
+		}
+	}
+	
+	private MQTTManager()
+	{
 		persistence = MQTTPersistence.getInstance();
 		connChkRunnable = new ConnectionCheckRunnable();
+	}
+
+	public static MQTTManager getInstance()
+	{
+		if (_instance == null)
+		{
+			synchronized (MQTTManager.class)
+			{
+				if (_instance == null)
+					_instance = new MQTTManager();
+			}
+		}
+		return _instance;
 	}
 
 	/*
@@ -128,8 +175,10 @@ public class MQTTManager extends BroadcastReceiver
 	 * should not be used or started in constructor as it might happen that incomplete 'this' object creation took place
 	 * till that time.
 	 */
-	public void init()
+	public void init(Context ctx)
 	{
+		context = ctx;
+		cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		HandlerThread mqttHandlerThread = new HandlerThread(MQTT_THREAD);
 		mqttHandlerThread.start();
 		mMqttHandlerLooper = mqttHandlerThread.getLooper();
@@ -139,8 +188,15 @@ public class MQTTManager extends BroadcastReceiver
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		context.registerReceiver(this, filter);
+		
+		mMessenger = new Messenger(new IncomingHandler(mMqttHandlerLooper));
 	}
 
+	public Messenger getMessenger()
+	{
+		return mMessenger;
+	}
+	
 	private void acquireWakeLock()
 	{
 		if (wakelock == null)
@@ -228,7 +284,7 @@ public class MQTTManager extends BroadcastReceiver
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			Log.e(TAG, "Exception while scheduling connection check runnable", e);
 		}
 	}
 
@@ -462,7 +518,7 @@ public class MQTTManager extends BroadcastReceiver
 	}
 
 	// this should always run on MQTT Thread
-	public void send(MQTTPacket packet, int qos)
+	private void send(MQTTPacket packet, int qos)
 	{
 		/* only care about failures for messages we care about. */
 		if (qos > 0)

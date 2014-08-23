@@ -23,4 +23,10 @@ public class MQTTConstants
 	 */
 	public static final short QUIESCE_TIME = 500;
 
+	public static final int MSG_PUBLISH = 1;
+
+	public static final String MESSAGE = "msg";
+
+	public static final String MESSAGE_ID = "msgId";
+
 }
