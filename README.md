@@ -1,4 +1,5 @@
 ASYNCHRONOUS MQTT MODULE/MANAGER FOR ANDROID
+=======================================================================
 
 AsyncMqttModule is a wrapper over Paho Mqtt library to connect and perform other operations on the MQTT brokers. The module is custom made for the Android environment. Following are the main highlights of the project.
 
