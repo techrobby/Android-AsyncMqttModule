@@ -16,9 +16,15 @@ HOW STUFF WORKS
 
 MqttManager is a singleton class which initialize the objects and other stuff through its init function. 
 A new thread (MQTT Thread) is started and attached to a queue using Android Handler. All the mqtt operations are done on this thread except explicit disconnect. Mqtt Paho library provides the capability of asynchronous operations, but in order to have the messages inorder we need a queue. Once MQTT is connected a connection check runnable is scheduled to check if connection is still there or not. 
+
 Note: Paho library pings the MQTT broker periodically but we cannot just rely on this only, hence, explicit connection check mechanism is implemented. One can disable it if required.
-In order to save battery, no alarm manager is used, also wakelock is acquired for a particular amount of time during connect call only. Few system level callbacks are used which notifies the module about SCREEN LOCK/UNLOCK and NETWORK CONNECTIVITY CHANGE, so that connection to the broker can be made instantly after network availability. All the MQTTExceptions are handled according to the type of exception (see code). In many cases reconnect attempt is not made immediately as there are cases when server is unavailable and trying to connect continuously will lead to battery drainage, hence exponential retry is imposed. 
-All the messages will be stored in the MqttPersistence database before being published and once an ack is received they are removed from the DB. Only QOS 1 or 2 messages will be persisted. There is a problem in Paho library that after you publish a message if there is any exception or disconnection before message persistence, the message will be lost as it will not get inserted into PAHO db just after publish (refer paho source code), hence, MQTTPersistence is used so that even before mqtt publish message gets inserted in db and once you get an ack it is removed.
+
+In order to save battery, no alarm manager is used, also wakelock is acquired for a particular amount of time during connect call only and is released once connected in case of exceptions. Few system level callbacks are used which notifies the module about SCREEN LOCK/UNLOCK and NETWORK CONNECTIVITY CHANGE, so that connection to the broker can be made instantly after network availability. 
+
+All the MQTTExceptions are handled according to the type of exception (see code). In many cases reconnect attempt is not made immediately as there are cases like server unavailable and trying to connect continuously will lead to battery drainage, hence exponential retry is imposed. 
+
+All the QOS 1 and 2 messages will be stored in the MqttPersistence database before being published and once an ack is received they are removed from the DB.
+There is a problem in Paho library that after you publish a message using paho publish, if there is any exception or disconnection before message persistence, the message will be lost, as it will not get inserted into PAHO db just after publish (refer paho source code), hence, MQTTPersistence is used so that even before publish is called message gets inserted in db and once you get an ack it is removed.
 
 USAGE
 -------------------
