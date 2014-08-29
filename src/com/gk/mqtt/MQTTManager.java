@@ -1,5 +1,7 @@
 package com.gk.mqtt;
 
+import inn.eatery.diner.mqtt.MQTTPacket;
+
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Random;
@@ -47,7 +49,7 @@ public class MQTTManager extends BroadcastReceiver
 	private Handler mqttThreadHandler;
 
 	private Looper mMqttHandlerLooper;
-	
+
 	private Messenger mMessenger; // this is used to interact with the mqtt thread
 
 	private ConnectionCheckRunnable connChkRunnable;
@@ -136,12 +138,12 @@ public class MQTTManager extends BroadcastReceiver
 			{
 				switch (msg.what)
 				{
-				case MQTTConstants.MSG_PUBLISH:
-					Bundle bundle = msg.getData();
-					String message = bundle.getString(MQTTConstants.MESSAGE);
-					long msgId = bundle.getLong(MQTTConstants.MESSAGE_ID, -1);
-					send(new MQTTPacket(message.getBytes(), msgId, System.currentTimeMillis()), msg.arg1);
-					break;
+					case MQTTConstants.MSG_PUBLISH:
+						Bundle bundle = msg.getData();
+						String message = bundle.getString(MQTTConstants.MESSAGE);
+						long msgId = bundle.getLong(MQTTConstants.MESSAGE_ID, -1);
+						send(new MQTTPacket(message.getBytes(), msgId, System.currentTimeMillis()), msg.arg1);
+						break;
 				}
 			}
 			catch (Exception e)
@@ -150,7 +152,7 @@ public class MQTTManager extends BroadcastReceiver
 			}
 		}
 	}
-	
+
 	private MQTTManager()
 	{
 		persistence = MQTTPersistence.getInstance();
@@ -188,7 +190,7 @@ public class MQTTManager extends BroadcastReceiver
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
 		filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		context.registerReceiver(this, filter);
-		
+
 		mMessenger = new Messenger(new IncomingHandler(mMqttHandlerLooper));
 	}
 
@@ -196,7 +198,7 @@ public class MQTTManager extends BroadcastReceiver
 	{
 		return mMessenger;
 	}
-	
+
 	private void acquireWakeLock()
 	{
 		if (wakelock == null)
@@ -508,10 +510,13 @@ public class MQTTManager extends BroadcastReceiver
 		{
 			// get the list from where ever messages are persisted
 			final List<MQTTPacket> packets = persistence.getAllSentMessages();
-			Log.w(TAG, "Retrying to send " + packets.size() + " messages");
-			for (MQTTPacket msg : packets)
+			if (packets != null)
 			{
-				send(msg, 1);
+				Log.w(TAG, "Retrying to send " + packets.size() + " messages");
+				for (MQTTPacket msg : packets)
+				{
+					send(msg, 1);
+				}
 			}
 			haveUnsentMessages.set(false);
 		}
