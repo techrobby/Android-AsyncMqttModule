@@ -38,16 +38,18 @@ public class MQTTPersistence extends SQLiteOpenHelper
 
 	private static MQTTPersistence mqttPersistence;
 
-	public static void init(Context context)
+	public static MQTTPersistence getInstance(Context context)
 	{
 		if (mqttPersistence == null)
 		{
-			mqttPersistence = new MQTTPersistence(context);
+			synchronized (MQTTPersistence.class)
+			{
+				if (mqttPersistence == null)
+				{
+					mqttPersistence = new MQTTPersistence(context);
+				}
+			}
 		}
-	}
-
-	public static MQTTPersistence getInstance()
-	{
 		return mqttPersistence;
 	}
 

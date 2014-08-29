@@ -1,7 +1,5 @@
 package com.gk.mqtt;
 
-import inn.eatery.diner.mqtt.MQTTPacket;
-
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Random;
@@ -155,7 +153,6 @@ public class MQTTManager extends BroadcastReceiver
 
 	private MQTTManager()
 	{
-		persistence = MQTTPersistence.getInstance();
 		connChkRunnable = new ConnectionCheckRunnable();
 	}
 
@@ -180,6 +177,7 @@ public class MQTTManager extends BroadcastReceiver
 	public void init(Context ctx)
 	{
 		context = ctx;
+		persistence = MQTTPersistence.getInstance(context);
 		cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		HandlerThread mqttHandlerThread = new HandlerThread(MQTT_THREAD);
 		mqttHandlerThread.start();
@@ -333,7 +331,7 @@ public class MQTTManager extends BroadcastReceiver
 				acquireWakeLock(MQTTConstants.CONNECTION_TIMEOUT_SECONDS);
 				IMqttToken token = mqtt.connect(op, null, getConnectListener());
 				/* Wait till mqtt gets connected as before connect nothing should be done */
-				token.waitForCompletion(MQTTConstants.CONNECTION_TIMEOUT_SECONDS);
+				token.waitForCompletion(MQTTConstants.CONNECTION_TIMEOUT_SECONDS * 60);
 			}
 		}
 		catch (MqttSecurityException e)
