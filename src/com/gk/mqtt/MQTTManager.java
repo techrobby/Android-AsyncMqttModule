@@ -331,7 +331,7 @@ public class MQTTManager extends BroadcastReceiver
 				acquireWakeLock(MQTTConstants.CONNECTION_TIMEOUT_SECONDS);
 				IMqttToken token = mqtt.connect(op, null, getConnectListener());
 				/* Wait till mqtt gets connected as before connect nothing should be done */
-				token.waitForCompletion(MQTTConstants.CONNECTION_TIMEOUT_SECONDS * 60);
+				token.waitForCompletion(MQTTConstants.CONNECTION_TIMEOUT_SECONDS * 1000);
 			}
 		}
 		catch (MqttSecurityException e)
