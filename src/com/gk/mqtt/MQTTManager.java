@@ -234,12 +234,12 @@ public class MQTTManager extends BroadcastReceiver
 		}
 	}
 
-	private void connectOnMqttThread()
+	public void connectOnMqttThread()
 	{
 		mqttThreadHandler.postAtFrontOfQueue(connChkRunnable);
 	}
 
-	private void connectOnMqttThread(long t)
+	public void connectOnMqttThread(long t)
 	{
 		try
 		{
