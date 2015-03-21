@@ -29,6 +29,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.os.RemoteException;
 import android.util.Log;
 
 public class MQTTManager extends BroadcastReceiver
@@ -758,4 +759,45 @@ public class MQTTManager extends BroadcastReceiver
 		}
 	}
 
+	/**
+	 *  This function uses byte [] as msg. This is customizable and can be changed to use any format.
+	 * @param msg
+	 * @param qos
+	 * @param topic
+	 */
+	public void sendMsgOnMqttThread(byte [] msg, int qos, String topic)
+	{
+		try
+		{
+			Message message = Message.obtain();
+			message.what = MQTTConstants.MSG_PUBLISH;
+			message.arg1 = qos;
+			Bundle b = new Bundle();
+			b.putString(MQTTConstants.MESSAGE, msg.toString());
+			message.setData(b);
+			mMessenger.send(message);
+		}
+		catch (RemoteException e)
+		{
+			Log.e(TAG, "Exception while sending MQTT message", e);
+		}
+	}
+
+	public void sendMsgOnMqttThread(String msg, int qos)
+	{
+		try
+		{
+			Message message = Message.obtain();
+			message.what = MQTTConstants.MSG_PUBLISH;
+			message.arg1 = qos;
+			Bundle b = new Bundle();
+			b.putString(MQTTConstants.MESSAGE, msg);
+			message.setData(b);
+			mMessenger.send(message);
+		}
+		catch (RemoteException e)
+		{
+			Log.e(TAG, "Exception while sending MQTT message", e);
+		}
+	}
 }
