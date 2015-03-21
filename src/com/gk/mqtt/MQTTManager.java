@@ -236,6 +236,7 @@ public class MQTTManager extends BroadcastReceiver
 
 	public void connectOnMqttThread()
 	{
+		Log.d(TAG, "Connecting on mqtt thread ....");
 		mqttThreadHandler.postAtFrontOfQueue(connChkRunnable);
 	}
 
@@ -243,6 +244,7 @@ public class MQTTManager extends BroadcastReceiver
 	{
 		try
 		{
+			Log.d(TAG, "Connecting on mqtt thread ....");
 			// make MQTT thread wait for t ms to attempt reconnect
 			connChkRunnable.setSleepTime(t);
 			mqttThreadHandler.postAtFrontOfQueue(connChkRunnable);
@@ -328,6 +330,7 @@ public class MQTTManager extends BroadcastReceiver
 			// if any network is available, then only connect, else connect at next check or when network gets available
 			if (isNetworkAvailable())
 			{
+				Log.d(TAG, "Connecting ......");
 				acquireWakeLock(MQTTConstants.CONNECTION_TIMEOUT_SECONDS);
 				IMqttToken token = mqtt.connect(op, null, getConnectListener());
 				/* Wait till mqtt gets connected as before connect nothing should be done */
